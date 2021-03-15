@@ -703,7 +703,7 @@ async function setup() {
     const validation = core.getInput("validation")
     const build = core.getInput("build")
     // Logging
-    const logging = core.getInput("logging")
+    const logging = core.getInput("logging") === 'true' || core.getInput("logging") === true
     console.log(`Step name: ${stepName}`)
     console.log(`Validation: ${validation}`)
     console.log(`Build: ${build}`)
@@ -744,19 +744,22 @@ function getCompletedStep(logging, octokit, stepName) {
     return new Promise((resolve, reject) => {
         const wait = setInterval(function () {
             if (logging) console.log(`Fetching step status: ${stepName}`)
-            const step = getStep(octokit, stepName)
-            if (logging) {
-                console.log("Step: ", step)
-            }
-            if (logging) console.log(`Step status: ${step.status}`)
-            if (step.status === 'completed') {
-                if (logging) console.log(`Step is completed: ${stepName}`)
-                clearInterval(wait);
-                resolve(step);
-            } else if (new Date() - start > timeoutMs) {
-                clearInterval(wait);
-                throw `Timeout waiting for step ${stepName} to be completed`
-            }
+            getStep()
+                .then(step => {
+                    if (logging) {
+                        console.log("Step: ", step)
+                        console.log(`Step status: ${step.status}`)
+                    }
+                    if (step.status === 'completed') {
+                        if (logging) console.log(`Step is completed: ${stepName}`)
+                        clearInterval(wait);
+                        resolve(step);
+                    } else if (new Date() - start > timeoutMs) {
+                        clearInterval(wait);
+                        throw `Timeout waiting for step ${stepName} to be completed`
+                    }
+                })
+                .catch(reject)
         }, 1000);
     });
 }
