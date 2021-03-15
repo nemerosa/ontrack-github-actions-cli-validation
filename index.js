@@ -19,4 +19,20 @@ async function setup() {
     console.log(`Step name: ${stepName}`)
     console.log(`Validation: ${validation}`)
     console.log(`Build: ${build}`)
+    // Getting information about the step to measure
+    const duration = await computeStepDuration(stepName)
+    console.log(`${stepName} step duration: ${duration} seconds`)
+}
+
+async function computeStepDuration(stepName) {
+    const token = core.getInput("token")
+    const octokit = github.getOctokit(token)
+
+    // Gets the current workflow
+    const runId = github.context.runId
+    console.log(`Run ID: ${runId}`)
+    console.log(`Job: ${github.context.job}`)
+
+    // TODO Gets the duration
+    return 0
 }

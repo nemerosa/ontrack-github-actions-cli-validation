@@ -13,6 +13,14 @@ inputs:
     description: |
       Name of the build to validate.
     required: true
+  token:
+    description: |
+      GitHub token to use to get information about the workflow.
+
+      Example:
+
+        token: ${{ github.token }}
+    required: true
   # Validation data
   type:
     description: |

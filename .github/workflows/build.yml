@@ -43,6 +43,7 @@ jobs:
         if: ${{ always() }}
         uses: ./
         with:
+          token: ${{ github.token }}
           step-name: Build
           validation: BUILD
           build: ${{ github.run_number }}
