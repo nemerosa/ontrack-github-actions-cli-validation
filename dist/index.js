@@ -715,6 +715,10 @@ async function computeStepDuration(stepName) {
     const token = core.getInput("token")
     const octokit = github.getOctokit(token)
 
+    // A bit of logging to follow things through
+    console.log(`Run ID: ${github.context.runId}`)
+    console.log(`Job name: ${github.context.job}`)
+
     // Gets the step after it's been completed
     const step = getCompletedStep(octokit, stepName)
 
