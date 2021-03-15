@@ -16,15 +16,16 @@ async function setup() {
     const validation = core.getInput("validation")
     const build = core.getInput("build")
     // Logging
+    const logging = core.getInput("logging")
     console.log(`Step name: ${stepName}`)
     console.log(`Validation: ${validation}`)
     console.log(`Build: ${build}`)
     // Getting information about the step to measure
-    const duration = await computeStepDuration(stepName)
+    const duration = await computeStepDuration(logging, stepName)
     console.log(`${stepName} step duration: ${duration} seconds`)
 }
 
-async function computeStepDuration(stepName) {
+async function computeStepDuration(logging, stepName) {
     const token = core.getInput("token")
     const octokit = github.getOctokit(token)
 
@@ -33,7 +34,7 @@ async function computeStepDuration(stepName) {
     console.log(`Job name: ${github.context.job}`)
 
     // Gets the step after it's been completed
-    const step = getCompletedStep(octokit, stepName)
+    const step = getCompletedStep(logging, octokit, stepName)
 
     // Step information
     const status = step.status
@@ -49,22 +50,25 @@ async function computeStepDuration(stepName) {
     return (completedAt - startedAt) / 1000
 }
 
-function getCompletedStep(octokit, stepName) {
+function getCompletedStep(logging, octokit, stepName) {
     const start = new Date()
     const timeoutMs = 10000
 
     return new Promise((resolve, reject) => {
         const wait = setInterval(function () {
-            console.log(`Fetching step status: ${stepName}`)
+            if (logging) console.log(`Fetching step status: ${stepName}`)
             const step = getStep(octokit, stepName)
-            console.log(`Step status: ${step.status}`)
+            if (logging) {
+                console.log("Step: ", step)
+            }
+            if (logging) console.log(`Step status: ${step.status}`)
             if (step.status === 'completed') {
-                console.log(`Step is completed: ${stepName}`)
+                if (logging) console.log(`Step is completed: ${stepName}`)
                 clearInterval(wait);
                 resolve(step);
             } else if (new Date() - start > timeoutMs) {
                 clearInterval(wait);
-                reject(`Timeout waiting for step ${stepName} to be completed`);
+                throw `Timeout waiting for step ${stepName} to be completed`
             }
         }, 1000);
     });

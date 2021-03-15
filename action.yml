@@ -35,6 +35,11 @@ inputs:
     description: Name of the Ontrack CLI executable
     required: false
     default: ontrack-cli
+  # Misc.
+  logging:
+    description: Activate some logging
+    required: false
+    default: "false"
 runs:
   using: 'node12'
   main: 'dist/index.js'
