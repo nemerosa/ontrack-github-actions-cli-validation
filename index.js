@@ -34,7 +34,7 @@ async function computeStepDuration(logging, stepName) {
     console.log(`Job name: ${github.context.job}`)
 
     // Gets the step after it's been completed
-    const step = getCompletedStep(logging, octokit, stepName)
+    const step = await getCompletedStep(logging, octokit, stepName)
 
     // Step information
     const status = step.status
