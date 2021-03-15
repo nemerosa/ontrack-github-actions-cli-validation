@@ -15,11 +15,8 @@ inputs:
     required: true
   token:
     description: |
-      GitHub token to use to get information about the workflow.
-
-      Example:
-
-        token: ${{ github.token }}
+      GitHub token to use to get information about the workflow. The `github.token` should be enough is most
+      of workflows.
     required: true
   # Validation data
   type:
