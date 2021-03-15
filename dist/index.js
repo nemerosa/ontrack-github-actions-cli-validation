@@ -749,7 +749,7 @@ function getCompletedStep(octokit, stepName) {
                 clearInterval(wait);
                 reject(`Timeout waiting for step ${stepName} to be completed`);
             }
-        }, 20);
+        }, 1000);
     });
 }
 
