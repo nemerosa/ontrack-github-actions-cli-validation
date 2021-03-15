@@ -1,0 +1,43 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - "*"
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - uses: actions/checkout@v2
+
+      - name: Ontrack setup
+        uses: nemerosa/ontrack-github-actions-cli-setup@main
+        id: ontrack
+        with:
+          version: 0.0.12
+          url: https://ontrack.nemerosa.net
+          token: ${{ secrets.ONTRACK_TOKEN }}
+          config: github.com
+          indexation: 120
+
+      - name: Ontrack build
+        run: |
+          ontrack-cli build setup --project ${{ steps.ontrack.outputs.project }} --branch ${{ steps.ontrack.outputs.branch }} --build ${{ github.run_number }}
+          ontrack-cli build set-property --project ${{ steps.ontrack.outputs.project }} --branch ${{ steps.ontrack.outputs.branch }} --build ${{ github.run_number }} git-commit --commit ${{ github.sha }}
+
+      - name: Build
+        run: npm install && ncc build
+
+      - name: Build validation
+        uses: ./
+        with:
+          step-name: Build
+          validation: BUILD
+          build: ${{ github.run_number }}
