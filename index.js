@@ -52,7 +52,7 @@ async function computeStepDuration(logging, stepName) {
 
 function getCompletedStep(logging, octokit, stepName) {
     const start = new Date()
-    const timeoutMs = 10000
+    const timeoutMs = 30000
 
     return new Promise((resolve, reject) => {
         const wait = setInterval(function () {
@@ -77,7 +77,7 @@ function getCompletedStep(logging, octokit, stepName) {
                     }
                 })
                 .catch(reject)
-        }, 1000);
+        }, 2000);
     });
 }
 
