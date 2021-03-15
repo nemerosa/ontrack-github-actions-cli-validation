@@ -33,6 +33,14 @@ async function computeStepDuration(stepName) {
     console.log(`Run ID: ${runId}`)
     console.log(`Job: ${github.context.job}`)
 
+    const run = await octokit.actions.getWorkflowRun({
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+        run_id: runId
+    });
+
+    console.log(`Run: ${run}`)
+
     // TODO Gets the duration
     return 0
 }
