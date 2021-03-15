@@ -711,6 +711,7 @@ async function setup() {
     const info = await computeStepRunInfo(logging, stepName)
     console.log(`${stepName} step duration: ${info.duration} seconds`)
     console.log(`${stepName} step URL: ${info.url}`)
+    console.log(`${stepName} step event: ${info.event}`)
 }
 
 async function computeStepRunInfo(logging, stepName) {
@@ -745,7 +746,8 @@ async function computeStepRunInfo(logging, stepName) {
     // Final information
     return {
         duration,
-        url
+        url,
+        event: github.context.eventName
     }
 }
 
