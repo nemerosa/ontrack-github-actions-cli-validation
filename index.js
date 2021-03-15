@@ -23,6 +23,7 @@ async function setup() {
     // Getting information about the step to measure
     const info = await computeStepRunInfo(logging, stepName)
     console.log(`${stepName} step duration: ${info.duration} seconds`)
+    console.log(`${stepName} step URL: ${info.url}`)
 }
 
 async function computeStepRunInfo(logging, stepName) {
@@ -34,7 +35,9 @@ async function computeStepRunInfo(logging, stepName) {
     console.log(`Job name: ${github.context.job}`)
 
     // Gets the step after it's been completed
-    const step = await getCompletedStep(logging, octokit, stepName)
+    const response = await getCompletedStep(logging, octokit, stepName)
+    const job = response.job
+    const step = response.step
 
     // Step information
     const status = step.status
@@ -49,9 +52,13 @@ async function computeStepRunInfo(logging, stepName) {
     // Gets the duration
     const duration = (completedAt - startedAt) / 1000
 
+    // Job link
+    const url = job.html_url
+
     // Final information
     return {
-        duration
+        duration,
+        url
     }
 }
 
@@ -65,17 +72,17 @@ function getCompletedStep(logging, octokit, stepName) {
                 console.log(`Fetching step status: ${stepName}`)
             }
             getStep(octokit, stepName)
-                .then(step => {
+                .then(response => {
                     if (logging) {
-                        console.log("Step: ", step)
-                        console.log(`Step status: ${step.status}`)
+                        console.log("Step: ", response.step)
+                        console.log(`Step status: ${response.step.status}`)
                     }
-                    if (step.status === 'completed') {
+                    if (response.step.status === 'completed') {
                         if (logging) {
                             console.log(`Step is completed: ${stepName}`)
                         }
                         clearInterval(wait);
-                        resolve(step);
+                        resolve(response);
                     } else if (new Date() - start > timeoutMs) {
                         clearInterval(wait);
                         reject(`Timeout waiting for step ${stepName} to be completed`)
@@ -106,5 +113,8 @@ async function getStep(octokit, stepName) {
     }
 
     // OK
-    return step
+    return {
+        job,
+        step
+    }
 }
