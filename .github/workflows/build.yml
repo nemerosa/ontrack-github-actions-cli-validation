@@ -27,11 +27,14 @@ jobs:
           config: github.com
           indexation: 120
 
+      - name: Ontrack validations
+        run: |
+          ontrack-cli vs setup generic --project ${{ steps.ontrack.outputs.project }} --branch ${{ steps.ontrack.outputs.branch }} --validation BUILD
+
       - name: Ontrack build
         run: |
           ontrack-cli build setup --project ${{ steps.ontrack.outputs.project }} --branch ${{ steps.ontrack.outputs.branch }} --build ${{ github.run_number }}
           ontrack-cli build set-property --project ${{ steps.ontrack.outputs.project }} --branch ${{ steps.ontrack.outputs.branch }} --build ${{ github.run_number }} git-commit --commit ${{ github.sha }}
-          ontrack-cli vs setup --project ${{ steps.ontrack.outputs.project }} --branch ${{ steps.ontrack.outputs.branch }} --validation BUILD
 
       - name: Build
         run: npm install && ncc build
