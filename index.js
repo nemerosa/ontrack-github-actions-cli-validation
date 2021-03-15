@@ -40,6 +40,8 @@ async function computeStepDuration(stepName) {
         run_id: runId
     });
 
+    console.log("Run: ", run)
+
     // Looks for the job
     const job = run.jobs.find((item) => item.name === jobName);
     if (!job) {
