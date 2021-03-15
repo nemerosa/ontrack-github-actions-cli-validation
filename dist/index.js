@@ -744,7 +744,7 @@ function getCompletedStep(logging, octokit, stepName) {
     return new Promise((resolve, reject) => {
         const wait = setInterval(function () {
             if (logging) console.log(`Fetching step status: ${stepName}`)
-            getStep()
+            getStep(octokit, stepName)
                 .then(step => {
                     if (logging) {
                         console.log("Step: ", step)
@@ -756,7 +756,7 @@ function getCompletedStep(logging, octokit, stepName) {
                         resolve(step);
                     } else if (new Date() - start > timeoutMs) {
                         clearInterval(wait);
-                        throw `Timeout waiting for step ${stepName} to be completed`
+                        reject(`Timeout waiting for step ${stepName} to be completed`)
                     }
                 })
                 .catch(reject)
