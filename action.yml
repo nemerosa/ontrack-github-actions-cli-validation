@@ -1,0 +1,36 @@
+name: 'Ontrack CLI Setup'
+description: 'Installs the Ontrack CLI'
+inputs:
+  version:
+    description: Version of the Ontrack CLI to setup (defaults to the latest)
+    required: false
+    default: ""
+  url:
+    description: URL of the Ontrack instance to target
+    required: false
+    default: ""
+  token:
+    description: Authentication token to use to connect to Ontrack (required if URL is set)
+    required: false
+    default: ""
+  name:
+    description: Optional name of the configuration to create
+    required: false
+    default: "prod"
+  config:
+    description: Name of the GitHub configuration to use
+    required: false
+  indexation:
+    description: Indexation interval of the GitHub repository in GitHub (in minutes)
+    required: false
+    default: "0"
+outputs:
+  installed:
+    description: Version which was actually installed
+  project:
+    description: Ontrack project name
+  branch:
+    description: Ontrack branch name
+runs:
+  using: 'node12'
+  main: 'dist/index.js'
