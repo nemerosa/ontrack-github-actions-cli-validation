@@ -28,29 +28,8 @@ async function computeStepDuration(stepName) {
     const token = core.getInput("token")
     const octokit = github.getOctokit(token)
 
-    // Gets the current workflow
-    const runId = github.context.runId
-    const jobName = github.context.job
-    console.log(`Run ID: ${runId}`)
-    console.log(`Job: ${jobName.job}`)
-
-    const run = await octokit.actions.listJobsForWorkflowRun({
-        owner: github.context.repo.owner,
-        repo: github.context.repo.repo,
-        run_id: runId
-    });
-
-    // Looks for the job
-    const job = run.data.jobs.find((item) => item.name === jobName);
-    if (!job) {
-        throw `Job not found in current workflow: ${jobName}`
-    }
-
-    // Looks for the step
-    const step = job.steps.find((item) => item.name === stepName);
-    if (!step) {
-        throw `Step not found in current job: ${stepName}`
-    }
+    // Gets the step after it's been completed
+    const step = getCompletedStep(octokit, stepName)
 
     // Step information
     const status = step.status
@@ -62,6 +41,50 @@ async function computeStepDuration(stepName) {
     console.log(`Step started at: ${startedAt}`)
     console.log(`Step completed at: ${completedAt}`)
 
-    // TODO Gets the duration
-    return 0
+    // Gets the duration
+    return (completedAt - startedAt) / 1000
+}
+
+function getCompletedStep(octokit, stepName) {
+    const start = new Date()
+    const timeoutMs = 10000
+
+    return new Promise((resolve, reject) => {
+        const wait = setInterval(function () {
+            console.log(`Fetching step status: ${stepName}`)
+            const step = getStep(octokit, stepName)
+            console.log(`Step status: ${step.status}`)
+            if (step.status === 'completed') {
+                console.log(`Step is completed: ${stepName}`)
+                clearInterval(wait);
+                resolve(step);
+            } else if (new Date() - start > timeoutMs) {
+                clearInterval(wait);
+                reject(`Timeout waiting for step ${stepName} to be completed`);
+            }
+        }, 20);
+    });
+}
+
+async function getStep(octokit, stepName) {
+    const run = await octokit.actions.listJobsForWorkflowRun({
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+        run_id: github.context.runId
+    });
+
+    // Looks for the job
+    const job = run.data.jobs.find((item) => item.name === github.context.job);
+    if (!job) {
+        throw `Job not found in current workflow: ${jobName}`
+    }
+
+    // Looks for the step
+    const step = job.steps.find((item) => item.name === stepName);
+    if (!step) {
+        throw `Step not found in current job: ${stepName}`
+    }
+
+    // OK
+    return step
 }
