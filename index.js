@@ -21,11 +21,11 @@ async function setup() {
     console.log(`Validation: ${validation}`)
     console.log(`Build: ${build}`)
     // Getting information about the step to measure
-    const duration = await computeStepDuration(logging, stepName)
-    console.log(`${stepName} step duration: ${duration} seconds`)
+    const info = await computeStepRunInfo(logging, stepName)
+    console.log(`${stepName} step duration: ${info.duration} seconds`)
 }
 
-async function computeStepDuration(logging, stepName) {
+async function computeStepRunInfo(logging, stepName) {
     const token = core.getInput("token")
     const octokit = github.getOctokit(token)
 
@@ -47,7 +47,12 @@ async function computeStepDuration(logging, stepName) {
     console.log(`Step completed at: ${completedAt}`)
 
     // Gets the duration
-    return (completedAt - startedAt) / 1000
+    const duration = (completedAt - startedAt) / 1000
+
+    // Final information
+    return {
+        duration
+    }
 }
 
 function getCompletedStep(logging, octokit, stepName) {
