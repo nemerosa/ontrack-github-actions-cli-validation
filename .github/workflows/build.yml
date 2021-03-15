@@ -42,9 +42,7 @@ jobs:
           ontrack-cli build set-property --project ${{ steps.ontrack.outputs.project }} --branch ${{ steps.ontrack.outputs.branch }} --build ${{ github.run_number }} git-commit --commit ${{ github.sha }}
 
       - name: Build
-        run: |
-          npm install
-          ncc build
+        run: npm install
 
       - name: Build validation
         if: ${{ always() }}
