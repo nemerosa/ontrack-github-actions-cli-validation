@@ -43,7 +43,6 @@ jobs:
         if: ${{ always() }}
         uses: ./
         with:
-          logging: true
           token: ${{ github.token }}
           step-name: Build
           validation: BUILD
