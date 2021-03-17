@@ -11,15 +11,36 @@ const github = require('@actions/github');
 })();
 
 async function setup() {
+
     // Required inputs
     const stepName = core.getInput("step-name")
     const validation = core.getInput("validation")
     const build = core.getInput("build")
+
+    // Get the Ontrack information
+    let project = core.getInput("project")
+    let branch = core.getInput("branch")
+    if (!project) {
+        project = github.context.repo.repo
+    }
+    if (!branch) {
+        // TODO Supports for pull requests
+        const branchPrefix = 'refs/heads/';
+        if (github.context.ref.startsWith('refs/heads/')) {
+            branch = github.context.ref.substring(branchPrefix.length);
+        } else {
+            throw `Ref not supported: ${github.context.ref}`
+        }
+    }
+
     // Logging
     const logging = core.getInput("logging") === 'true' || core.getInput("logging") === true
     console.log(`Step name: ${stepName}`)
+    console.log(`Project: ${project}`)
+    console.log(`Branch: ${branch}`)
     console.log(`Validation: ${validation}`)
     console.log(`Build: ${build}`)
+
     // Getting information about the step to measure
     const info = await computeStepRunInfo(logging, stepName)
     console.log(`${stepName} step duration: ${info.duration} seconds`)
