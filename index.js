@@ -52,6 +52,7 @@ async function setup() {
 
     // Getting information about the step to measure
     const info = await computeStepRunInfo(logging, stepName)
+    console.log(`${stepName} step Ontrack status: ${info.status}`)
     console.log(`${stepName} step duration: ${info.duration} seconds`)
     console.log(`${stepName} step URL: ${info.url}`)
     console.log(`${stepName} step event: ${info.event}`)
@@ -68,6 +69,10 @@ async function setup() {
             const flags = dataFlags.split(" ")
             args = args.concat(flags)
         }
+    }
+    // If no data, status must be passed
+    else {
+        args.push("--status", info.status)
     }
     // Logging
     // console.log(`CLI ${executable} `, args)
@@ -104,11 +109,20 @@ async function computeStepRunInfo(logging, stepName) {
     // Job link
     const url = job.html_url
 
+    // Converts the conclusion to an Ontrack status
+    let ontrackStatus;
+    if (conclusion === 'success') {
+        ontrackStatus = 'PASSED';
+    } else {
+        ontrackStatus = 'FAILED';
+    }
+
     // Final information
     return {
         duration,
         url,
-        event: github.context.eventName
+        event: github.context.eventName,
+        status: ontrackStatus
     }
 }
 
