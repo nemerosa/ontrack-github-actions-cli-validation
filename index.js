@@ -33,6 +33,13 @@ async function setup() {
         }
     }
 
+    // Data type
+    const dataType = core.getInput("type")
+    const dataFlags = core.getInput("flags")
+    if (dataFlags && !dataType) {
+        throw `Flags are provided without a data type.`
+    }
+
     // Logging
     const logging = core.getInput("logging") === 'true' || core.getInput("logging") === true
     console.log(`Step name: ${stepName}`)
@@ -40,12 +47,30 @@ async function setup() {
     console.log(`Branch: ${branch}`)
     console.log(`Validation: ${validation}`)
     console.log(`Build: ${build}`)
+    console.log(`Data type: ${dataType}`)
+    console.log(`Data flags: ${dataFlags}`)
 
     // Getting information about the step to measure
     const info = await computeStepRunInfo(logging, stepName)
     console.log(`${stepName} step duration: ${info.duration} seconds`)
     console.log(`${stepName} step URL: ${info.url}`)
     console.log(`${stepName} step event: ${info.event}`)
+
+    // CLI command to prepare
+    const executable = core.getInput("executable")
+    let args = ["validate", "--project", project, "--branch", branch, "--build", build, "--validation", validation]
+    // Run info
+    args.push("--run-time", info.duration, "--source-type", "github", "--source-uri", info.url, "--trigger-type", info.event)
+    // Data
+    if (dataType) {
+        args.push(dataType)
+        if (dataFlags) {
+            const flags = dataFlags.split(" ")
+            args = args.concat(flags)
+        }
+    }
+    // Logging
+    console.log(`CLI ${executable} `, args)
 }
 
 async function computeStepRunInfo(logging, stepName) {
