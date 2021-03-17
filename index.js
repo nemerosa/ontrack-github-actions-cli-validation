@@ -70,7 +70,9 @@ async function setup() {
         }
     }
     // Logging
-    console.log(`CLI ${executable} `, args)
+    // console.log(`CLI ${executable} `, args)
+    // Running the command
+    await exec.exec(executable, args)
 }
 
 async function computeStepRunInfo(logging, stepName) {
