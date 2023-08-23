@@ -26,7 +26,7 @@ jobs:
         uses: nemerosa/ontrack-github-actions-cli-setup@main
         id: ontrack
         with:
-          version: 0.0.14
+          version: 0.1.18
           url: https://ontrack.nemerosa.net
           token: ${{ secrets.ONTRACK_TOKEN }}
           config: github.com
