@@ -167,7 +167,7 @@ async function getStep(octokit, stepName) {
     // Looks for the job
     const job = run.data.jobs.find((item) => item.name === github.context.job);
     if (!job) {
-        throw `Job not found in current workflow: ${jobName}`
+        throw `Job not found in current workflow: ${github.context.job}`
     }
 
     // Looks for the step
