@@ -158,7 +158,7 @@ function getCompletedStep(logging, octokit, stepName) {
 }
 
 async function getStep(octokit, stepName) {
-    const run = await octokit.actions.listJobsForWorkflowRun({
+    const run = await octokit.rest.actions.listJobsForWorkflowRun({
         owner: github.context.repo.owner,
         repo: github.context.repo.repo,
         run_id: github.context.runId
