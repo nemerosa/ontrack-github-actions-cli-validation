@@ -1,0 +1,12 @@
+version: v1
+configuration:
+  defaults:
+    branch:
+      validations:
+        BUILD: {}
+        RELEASE: {}
+      promotions:
+        BRONZE:
+          validations:
+            - BUILD
+            - RELEASE

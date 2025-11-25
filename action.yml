@@ -1,33 +1,38 @@
 name: 'Ontrack CLI Validation'
 description: 'GitHub action to create a validation run based on the GitHub workflow information using the Ontrack CLI'
 inputs:
-  # Required inputs
-  step-name:
-    description: Name of the step in the current workflow job to take as a reference for the validation
-    required: true
   project:
     description: |
-      Name of the Ontrack project. If not set, the action will try to get the information
-      from the current GitHub repository.
+      Name of the Yontrack project. If not set, the action will try to get the information
+      from the current environment variables.
     required: false
   branch:
     description: |
-      Name of the Ontrack branch.If not set, the action will try to get the information
-      from the current Git branch.
+      Name of the Yontrack branch. If not set, the action will try to get the information
+      from the current environment variables.
+    required: false
+  build:
+    description: |
+      Name of the build to validate. If not set, the action will try to get the information
+      from the current environment variables.
     required: false
   validation:
     description: |
       Name of the validation stamp to use for the creation of the validation run in Ontrack.
     required: true
-  build:
+  # Validation status
+  status:
     description: |
-      Name of the build to validate.
-    required: true
-  token:
-    description: |
-      GitHub token to use to get information about the workflow. The `github.token` should be enough is most
-      of workflows.
-    required: true
+      Status of the validation run, like PASSED, FAILED, etc. If not provided, Yontrack
+      will attempts to compute the status from any data provided.
+      
+      Most of the time, you can use:
+      
+      ```yaml
+      with:
+        status: '[ "${{ steps.npm-build.outcome }}" = "success" ] && echo PASSED || echo FAILED'
+      ```
+    required: false
   # Validation data
   type:
     description: |

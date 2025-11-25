@@ -3,7 +3,7 @@ name: Build
 on:
   push:
     branches:
-      - "*"
+      - main
   pull_request:
     branches:
       - main
@@ -11,48 +11,71 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
     steps:
-      - uses: actions/checkout@v3
 
-      - name: Set Node.js 16.x
-        uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
         with:
-          node-version: 16.x
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: true
 
-      - name: Ontrack setup
-        # Don't run this step on forks
-        if: github.repository_owner == 'nemerosa'
-        uses: nemerosa/ontrack-github-actions-cli-setup@main
-        id: ontrack
+      - name: Use Node.js 20.x
+        uses: actions/setup-node@v6
         with:
-          version: 0.1.18
-          url: https://ontrack.nemerosa.net
-          token: ${{ secrets.ONTRACK_TOKEN }}
-          config: github.com
-          indexation: 120
+          node-version: 20.x
 
-      - name: Ontrack validations
-        # Don't run this step on forks
-        if: github.repository_owner == 'nemerosa'
-        run: |
-          ontrack-cli vs setup generic --project ${{ steps.ontrack.outputs.project }} --branch ${{ steps.ontrack.outputs.branch }} --validation BUILD
+      - name: Install dependencies
+        id: npm-ci
+        run: npm ci
+        env:
+          # See https://docs.github.com/en/packages/learn-github-packages/configuring-a-packages-access-control-and-visibility#ensuring-workflow-access-to-your-package
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Ontrack build
-        # Don't run this step on forks
-        if: github.repository_owner == 'nemerosa'
-        run: |
-          ontrack-cli build setup --project ${{ steps.ontrack.outputs.project }} --branch ${{ steps.ontrack.outputs.branch }} --build ${{ github.run_number }}
-          ontrack-cli build set-property --project ${{ steps.ontrack.outputs.project }} --branch ${{ steps.ontrack.outputs.branch }} --build ${{ github.run_number }} git-commit --commit ${{ github.sha }}
+      - name: Building and running tests
+        id: npm-build
+        run: npm run build && npm test
 
-      - name: Build
-        run: npm install
+      - name: "Yontrack configuration"
+        id: yontrack-config
+        uses: nemerosa/ontrack-github-actions-cli-config@v1.0.3
+        env:
+          YONTRACK_URL: ${{ vars.ONTRACK_URL }}
+          YONTRACK_TOKEN: ${{ secrets.ONTRACK_TOKEN }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build validation
-        if: ${{ always() }}
+        if: ${{ steps.npm-build.outcome != '' }}
         uses: ./
         with:
-          # logging: true
-          token: ${{ github.token }}
-          step-name: Build
+          logging: true
           validation: BUILD
-          build: ${{ github.run_number }}
+          status: '[ "${{ steps.npm-build.outcome }}" = "success" ] && echo PASSED || echo FAILED'
+
+      - name: Publication
+        id: npm-publish
+        if: ${{ github.ref_name == 'main' }}
+        run: |
+          npx semantic-release
+          # Capture the version from the latest git tag created by semantic-release
+          VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Tagging the Yontrack build
+        if: ${{ github.ref_name == 'main' }}
+        run: |
+          yontrack build set-property release ${{ steps.npm-publish.outputs.version }}
+
+      - name: Released validation
+        uses: ./
+        with:
+          logging: true
+          validation: RELEASE
+          status: PASSED
