@@ -35,10 +35,6 @@ jobs:
           # See https://docs.github.com/en/packages/learn-github-packages/configuring-a-packages-access-control-and-visibility#ensuring-workflow-access-to-your-package
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Building and running tests
-        id: npm-build
-        run: npm run build && npm test
-
       - name: "Yontrack configuration"
         id: yontrack-config
         uses: nemerosa/ontrack-github-actions-cli-config@v1.0.3
@@ -47,6 +43,10 @@ jobs:
           YONTRACK_TOKEN: ${{ secrets.ONTRACK_TOKEN }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Building and running tests
+        id: npm-build
+        run: npm run build && npm test
 
       - name: Build validation
         if: ${{ steps.npm-build.outcome != '' }}
