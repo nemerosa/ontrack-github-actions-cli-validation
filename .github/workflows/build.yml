@@ -54,7 +54,7 @@ jobs:
         with:
           logging: true
           validation: BUILD
-          status: '[ "${{ steps.npm-build.outcome }}" = "success" ] && echo PASSED || echo FAILED'
+          status: ${{ steps.npm-build.outcome == 'success' && 'PASSED' || 'FAILED' }}
 
       - name: Publication
         id: npm-publish

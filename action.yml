@@ -30,7 +30,7 @@ inputs:
       
       ```yaml
       with:
-        status: '[ "${{ steps.npm-build.outcome }}" = "success" ] && echo PASSED || echo FAILED'
+        status: ${{ steps.npm-build.outcome == 'success' && 'PASSED' || 'FAILED' }}
       ```
     required: false
   # Validation data
