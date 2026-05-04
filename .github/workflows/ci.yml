@@ -41,7 +41,7 @@ jobs:
       - name: Yontrack configuration
         if: github.repository_owner == 'nemerosa' && vars.ONTRACK_URL != ''
         id: yontrack-config
-        uses: nemerosa/ontrack-github-actions-cli-config@v1
+        uses: nemerosa/ontrack-github-actions-cli-config@v1.3.0
         env:
           YONTRACK_URL: ${{ vars.ONTRACK_URL }}
           YONTRACK_TOKEN: ${{ secrets.ONTRACK_TOKEN }}
