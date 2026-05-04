@@ -1,184 +1,97 @@
-const core = require('@actions/core');
-const exec = require('@actions/exec');
-const github = require('@actions/github');
-
-(async () => {
-    try {
-        await setup();
-    } catch (error) {
-        core.setFailed(error.message);
+async function runAction({ core, exec, github }) {
+    const validation = core.getInput("validation");
+    if (!validation) {
+        throw new Error("validation input is required");
     }
-})();
 
-async function setup() {
-
-    // Required inputs
-    const stepName = core.getInput("step-name")
-    const validation = core.getInput("validation")
-    const build = core.getInput("build")
-
-    // Get the Ontrack information
-    let project = core.getInput("project")
-    let branch = core.getInput("branch")
+    let project = core.getInput("project");
     if (!project) {
-        project = github.context.repo.repo
+        project = process.env.YONTRACK_PROJECT_NAME;
+    }
+    if (!project) {
+        project = github.context.repo.repo;
+    }
+
+    let branch = core.getInput("branch");
+    if (!branch) {
+        branch = process.env.YONTRACK_BRANCH_NAME;
     }
     if (!branch) {
-        // TODO Supports for pull requests
         const branchPrefix = 'refs/heads/';
-        if (github.context.ref.startsWith('refs/heads/')) {
+        if (github.context.ref.startsWith(branchPrefix)) {
             branch = github.context.ref.substring(branchPrefix.length);
         } else {
-            throw `Ref not supported: ${github.context.ref}`
+            throw new Error(`Ref not supported: ${github.context.ref}`);
         }
     }
 
-    // Data type
-    const dataType = core.getInput("type")
-    const dataFlags = core.getInput("flags")
+    let build = core.getInput("build");
+    if (!build) {
+        build = process.env.YONTRACK_BUILD_NAME;
+    }
+    if (!build) {
+        throw new Error("build input is required (or YONTRACK_BUILD_NAME env var must be set)");
+    }
+
+    const status = core.getInput("status");
+
+    const dataType = core.getInput("type");
+    const dataFlags = core.getInput("flags");
     if (dataFlags && !dataType) {
-        throw `Flags are provided without a data type.`
+        throw new Error("Flags are provided without a data type.");
     }
 
-    // Logging
-    const logging = core.getInput("logging") === 'true' || core.getInput("logging") === true
-    console.log(`Step name: ${stepName}`)
-    console.log(`Project: ${project}`)
-    console.log(`Branch: ${branch}`)
-    console.log(`Validation: ${validation}`)
-    console.log(`Build: ${build}`)
-    console.log(`Data type: ${dataType}`)
-    console.log(`Data flags: ${dataFlags}`)
+    const loggingInput = core.getInput("logging");
+    const logging = loggingInput === 'true' || loggingInput === true;
+    if (logging) {
+        console.log(`Project: ${project}`);
+        console.log(`Branch: ${branch}`);
+        console.log(`Build: ${build}`);
+        console.log(`Validation: ${validation}`);
+        console.log(`Status: ${status || '(none)'}`);
+        console.log(`Data type: ${dataType || '(none)'}`);
+        console.log(`Data flags: ${dataFlags || '(none)'}`);
+    }
 
-    // Getting information about the step to measure
-    const info = await computeStepRunInfo(logging, stepName)
-    console.log(`${stepName} step Ontrack status: ${info.status}`)
-    console.log(`${stepName} step duration: ${info.duration} seconds`)
-    console.log(`${stepName} step URL: ${info.url}`)
-    console.log(`${stepName} step event: ${info.event}`)
+    const executable = core.getInput("executable") || 'ontrack-cli';
+    const args = [
+        "validate",
+        "--project", project,
+        "--branch", branch,
+        "--build", build,
+        "--validation", validation,
+    ];
 
-    // CLI command to prepare
-    const executable = core.getInput("executable")
-    let args = ["validate", "--project", project, "--branch", branch, "--build", build, "--validation", validation]
-    // Run info
-    args.push("--run-time", info.duration, "--source-type", "github", "--source-uri", info.url, "--trigger-type", info.event)
-    // Data
+    if (status) {
+        args.push("--status", status);
+    }
+
     if (dataType) {
-        args.push(dataType)
+        args.push(dataType);
         if (dataFlags) {
-            const flags = dataFlags.split(" ")
-            args = args.concat(flags)
+            const flags = dataFlags.split(" ");
+            args.push(...flags);
         }
     }
-    // If no data, status must be passed
-    else {
-        args.push("--status", info.status)
+
+    if (logging) {
+        console.log(`CLI ${executable} `, args);
     }
-    // Logging
-    // console.log(`CLI ${executable} `, args)
-    // Running the command
-    await exec.exec(executable, args)
+
+    await exec.exec(executable, args);
 }
 
-async function computeStepRunInfo(logging, stepName) {
-    const token = core.getInput("token")
-    const octokit = github.getOctokit(token)
+module.exports = { runAction };
 
-    // A bit of logging to follow things through
-    console.log(`Run ID: ${github.context.runId}`)
-    console.log(`Job name: ${github.context.job}`)
-
-    // Gets the step after it's been completed
-    const response = await getCompletedStep(logging, octokit, stepName)
-    const job = response.job
-    const step = response.step
-
-    // Step information
-    const status = step.status
-    const conclusion = step.conclusion
-    const startedAt = new Date(step.started_at)
-    const completedAt = new Date(step.completed_at)
-    console.log(`Step status: ${status}`)
-    console.log(`Step conclusion: ${conclusion}`)
-    console.log(`Step started at: ${startedAt}`)
-    console.log(`Step completed at: ${completedAt}`)
-
-    // Gets the duration
-    const duration = (completedAt - startedAt) / 1000
-
-    // Job link
-    const url = job.html_url
-
-    // Converts the conclusion to an Ontrack status
-    let ontrackStatus;
-    if (conclusion === 'success') {
-        ontrackStatus = 'PASSED';
-    } else {
-        ontrackStatus = 'FAILED';
-    }
-
-    // Final information
-    return {
-        duration,
-        url,
-        event: github.context.eventName,
-        status: ontrackStatus
-    }
-}
-
-function getCompletedStep(logging, octokit, stepName) {
-    const start = new Date()
-    const timeoutMs = 30000
-
-    return new Promise((resolve, reject) => {
-        const wait = setInterval(function () {
-            if (logging) {
-                console.log(`Fetching step status: ${stepName}`)
-            }
-            getStep(octokit, stepName)
-                .then(response => {
-                    if (logging) {
-                        console.log("Step: ", response.step)
-                        console.log(`Step status: ${response.step.status}`)
-                    }
-                    if (response.step.status === 'completed') {
-                        if (logging) {
-                            console.log(`Step is completed: ${stepName}`)
-                        }
-                        clearInterval(wait);
-                        resolve(response);
-                    } else if (new Date() - start > timeoutMs) {
-                        clearInterval(wait);
-                        reject(`Timeout waiting for step ${stepName} to be completed`)
-                    }
-                })
-                .catch(reject)
-        }, 2000);
-    });
-}
-
-async function getStep(octokit, stepName) {
-    const run = await octokit.rest.actions.listJobsForWorkflowRun({
-        owner: github.context.repo.owner,
-        repo: github.context.repo.repo,
-        run_id: github.context.runId
-    });
-
-    // Looks for the job
-    const job = run.data.jobs.find((item) => item.name === github.context.job);
-    if (!job) {
-        throw `Job not found in current workflow: ${github.context.job}`
-    }
-
-    // Looks for the step
-    const step = job.steps.find((item) => item.name === stepName);
-    if (!step) {
-        throw `Step not found in current job: ${stepName}`
-    }
-
-    // OK
-    return {
-        job,
-        step
-    }
+if (process.env.NODE_ENV !== 'test') {
+    (async () => {
+        const core = await import('@actions/core');
+        const execDep = await import('@actions/exec');
+        const github = await import('@actions/github');
+        try {
+            await runAction({ core, exec: execDep, github });
+        } catch (error) {
+            core.setFailed(error.message);
+        }
+    })();
 }
