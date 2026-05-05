@@ -8,17 +8,17 @@ The Yontrack CLI must be installed and configured on the runner. The recommended
 
 ## Inputs
 
-| Input | Required | Description |
-|---|---|---|
-| `validation` | yes | Name of the validation stamp to use for the validation run. |
+| Input | Required | Description                                                                                                                                     |
+|---|---|-------------------------------------------------------------------------------------------------------------------------------------------------|
+| `validation` | yes | Name of the validation stamp to use for the validation run.                                                                                     |
 | `status` | no | Status of the validation run (e.g. `PASSED`, `FAILED`). If omitted but `type`/`flags` are provided, Yontrack computes the status from the data. |
-| `type` | no | Type of validation data, as supported by the Yontrack CLI (e.g. `tests`). |
-| `flags` | no | Additional CLI flags for the data type (e.g. `--passed 10 --failed 1`). Required if `type` is set. |
-| `project` | no | Project name in Yontrack. Defaults to `YONTRACK_PROJECT_NAME` env var, then to the GitHub repo name. |
-| `branch` | no | Branch name in Yontrack. Defaults to `YONTRACK_BRANCH_NAME` env var, then to the parsed Git ref. |
-| `build` | no | Build name in Yontrack. Defaults to `YONTRACK_BUILD_NAME` env var. Required (either input or env var). |
-| `executable` | no | Name of the Yontrack CLI executable. Defaults to `ontrack-cli`. |
-| `logging` | no | Set to `true` for verbose logging. Defaults to `false`. |
+| `type` | no | Type of validation data, as supported by the Yontrack CLI (e.g. `tests`).                                                                       |
+| `flags` | no | Additional CLI flags for the data type (e.g. `--passed 10 --failed 1`). Required if `type` is set.                                              |
+| `project` | no | Project name in Yontrack. Defaults to `YONTRACK_PROJECT_NAME` env var, then to the GitHub repo name.                                            |
+| `branch` | no | Branch name in Yontrack. Defaults to `YONTRACK_BRANCH_NAME` env var, then to the parsed Git ref.                                                |
+| `build` | no | Build name in Yontrack. Defaults to `YONTRACK_BUILD_NAME` env var. Required (either input or env var).                                          |
+| `executable` | no | Name of the Yontrack CLI executable. Defaults to `yontrack`.                                                                                |
+| `logging` | no | Set to `true` for verbose logging. Defaults to `false`.                                                                                         |
 
 ## Outputs
 

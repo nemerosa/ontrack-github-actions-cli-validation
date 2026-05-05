@@ -49,7 +49,7 @@ inputs:
   executable:
     description: Name of the Ontrack CLI executable
     required: false
-    default: ontrack-cli
+    default: yontrack
   # Misc.
   logging:
     description: Activate some logging
